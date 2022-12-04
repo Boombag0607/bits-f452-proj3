@@ -4,15 +4,12 @@ var ethJSABI = require("ethjs-abi");
 var BlockchainUtils = require("truffle-blockchain-utils");
 var Web3 = require("web3");
 
-// For browserified version. If browserify gave us an empty version,
-// look for the one provided by the user.
 if (typeof Web3 == "object" && Object.keys(Web3).length == 0) {
   Web3 = global.Web3;
 }
 
 var contract = (function(module) {
 
-  // Planned for future features, logging, etc.
   function Provider(provider) {
     this.provider = provider;
   }
@@ -34,7 +31,6 @@ var contract = (function(module) {
     is_big_number: function(val) {
       if (typeof val != "object") return false;
 
-      // Instanceof won't work because we have multiple versions of Web3.
       try {
         new BigNumber(val);
         return true;
@@ -49,9 +45,6 @@ var contract = (function(module) {
         if (logABI == null) {
           return null;
         }
-
-        // This function has been adapted from web3's SolidityEvent.decode() method,
-        // and built to work with ethjs-abi.
 
         var copy = Utils.merge({}, log);
 
@@ -116,7 +109,6 @@ var contract = (function(module) {
         var tx_params = {};
         var last_arg = args[args.length - 1];
 
-        // It's only tx_params if it's an object and not a BigNumber.
         if (Utils.is_object(last_arg) && !Utils.is_big_number(last_arg)) {
           tx_params = args.pop();
         }
@@ -145,7 +137,6 @@ var contract = (function(module) {
         var tx_params = {};
         var last_arg = args[args.length - 1];
 
-        // It's only tx_params if it's an object and not a BigNumber.
         if (Utils.is_object(last_arg) && !Utils.is_big_number(last_arg)) {
           tx_params = args.pop();
         }
@@ -231,7 +222,6 @@ var contract = (function(module) {
       });
     },
     bootstrap: function(fn) {
-      // Add our static methods
       Object.keys(fn._static_methods).forEach(function(key) {
         fn[key] = fn._static_methods[key].bind(fn);
       });
@@ -245,9 +235,6 @@ var contract = (function(module) {
     }
   };
 
-  // Accepts a contract object created with web3.eth.contract.
-  // Optionally, if called without `new`, accepts a network_id and will
-  // create a new version of the contract abstraction with that network_id set.
   function Contract(contract) {
     var self = this;
     var constructor = this.constructor;
@@ -327,7 +314,6 @@ var contract = (function(module) {
       }
 
       return self.detectNetwork().then(function(network_id) {
-        // After the network is set, check to make sure everything's ship shape.
         var regex = /__[^_]+_+/g;
         var unlinked_libraries = self.binary.match(regex);
 
@@ -352,7 +338,6 @@ var contract = (function(module) {
           var tx_params = {};
           var last_arg = args[args.length - 1];
 
-          // It's only tx_params if it's an object and not a BigNumber.
           if (Utils.is_object(last_arg) && !Utils.is_big_number(last_arg)) {
             tx_params = args.pop();
           }
@@ -391,7 +376,6 @@ var contract = (function(module) {
 
       var contract = new this(address);
 
-      // Add thennable to allow people opt into new recommended usage.
       contract.then = function(fn) {
         return self.detectNetwork().then(function(network_id) {
           var instance = new self(address);
@@ -415,17 +399,14 @@ var contract = (function(module) {
 
     deployed: function() {
       var self = this;
-      var val = {}; //this.at(this.address);
+      var val = {};
 
-      // Add thennable to allow people to opt into new recommended usage.
       val.then = function(fn) {
         return self.detectNetwork().then(function() {
-          // We don't have a network config for the one we found
           if (self._json.networks[self.network_id] == null) {
             throw new Error(self.contract_name + " has not been deployed to detected network (network/artifact mismatch)");
           }
 
-          // If we found the network but it's not deployed
           if (!self.isDeployed()) {
             throw new Error(self.contract_name + " has not been deployed to detected network (" + self.network_id + ")");
           }
@@ -475,9 +456,9 @@ var contract = (function(module) {
       var self = this;
 
       return new Promise(function(accept, reject) {
-        // Try to detect the network we have artifacts for.
+
         if (self.network_id) {
-          // We have a network id and a configuration, let's go with it.
+          
           if (self.networks[self.network_id] != null) {
             return accept(self.network_id);
           }
@@ -488,14 +469,11 @@ var contract = (function(module) {
 
           var network_id = result.toString();
 
-          // If we found the network via a number, let's use that.
           if (self.hasNetwork(network_id)) {
             self.setNetwork(network_id);
             return accept();
           }
 
-          // Otherwise, go through all the networks that are listed as
-          // blockchain uris and see if they match.
           var uris = Object.keys(self._json.networks).filter(function(network) {
             return network.indexOf("blockchain://") == 0;
           });
@@ -514,7 +492,6 @@ var contract = (function(module) {
               }
             }
 
-            // We found nothing. Set the network id to whatever the provider states.
             self.setNetwork(network_id);
 
             accept();
@@ -529,8 +506,6 @@ var contract = (function(module) {
       this.network_id = network_id + "";
     },
 
-    // Overrides the deployed address to null.
-    // You must call this explicitly so you don't inadvertently do this otherwise.
     resetAddress: function() {
       delete this.network.address;
     },
@@ -547,7 +522,6 @@ var contract = (function(module) {
 
         this.link(contract.contract_name, contract.address);
 
-        // Merge events so this contract knows about library's events
         Object.keys(contract.events).forEach(function(topic) {
           self.network.events[topic] = contract.events[topic];
         });
@@ -607,7 +581,6 @@ var contract = (function(module) {
         temp.setNetwork(network_id);
       }
 
-      // Copy over custom options
       Object.keys(options).forEach(function(key) {
         if (key.indexOf("x-") != 0) return;
         temp[key] = options[key];
@@ -632,7 +605,6 @@ var contract = (function(module) {
           return;
         }
 
-        // If there's not a setter, then the property is immutable.
         throw new Error(key + " property is immutable");
       };
 
@@ -650,7 +622,6 @@ var contract = (function(module) {
     }
   };
 
-  // Getter functions are scoped to Contract object.
   Contract._properties = {
     contract_name: {
       get: function() {
@@ -675,7 +646,6 @@ var contract = (function(module) {
         throw new Error(this.contract_name + " has no network id set, cannot lookup artifact data. Either set the network manually using " + this.contract_name + ".setNetwork(), run " + this.contract_name + ".detectNetwork(), or use new(), at() or deployed() as a thenable which will detect the network automatically.");
       }
 
-      // TODO: this might be bad; setting a value on a get.
       if (this._json.networks[network_id] == null) {
         throw new Error(this.contract_name + " has no network configuration for its current network id (" + network_id + ").");
       }
@@ -706,15 +676,12 @@ var contract = (function(module) {
           throw new Error(this.contract_name + " has no network id set, cannot lookup artifact data. Either set the network manually using " + this.contract_name + ".setNetwork(), run " + this.contract_name + ".detectNetwork(), or use new(), at() or deployed() as a thenable which will detect the network automatically.");
         }
 
-        // Create a network if we don't have one.
         if (this._json.networks[network_id] == null) {
-          this._json.networks[network_id] = {
+          this._json.networks[network_id] = { // create network config if it doesn't exist
             events: {},
             links: {}
           };
         }
-
-        // Finally, set the address.
         this.network.address = val;
       }
     },
@@ -726,7 +693,6 @@ var contract = (function(module) {
       return this.network.links || {};
     },
     events: function() {
-      // helper web3; not used for provider
       var web3 = new Web3();
 
       var events;
@@ -737,7 +703,6 @@ var contract = (function(module) {
         events = this.network.events || {};
       }
 
-      // Merge abi events with whatever's returned.
       var abi = this.abi;
 
       abi.forEach(function(item) {
@@ -780,7 +745,6 @@ var contract = (function(module) {
         return this._json.unlinked_binary;
       },
       set: function(val) {
-        // TODO: Ensure 0x prefix.
         this._json.unlinked_binary = val;
       }
     },
@@ -812,12 +776,9 @@ var contract = function(options) {
   options = Schema.normalizeOptions(options);
   var binary = Schema.generateBinary(options, {}, {dirty: false});
 
-  // Note we don't use `new` here at all. This will cause the class to
-  // "mutate" instead of instantiate an instance.
   return Contract.clone(binary);
 };
 
-// To be used to upgrade old .sol.js abstractions
 contract.fromSolJS = function(soljs_abstraction, ignore_default_network) {
   if (ignore_default_network == null) {
     ignore_default_network = false;
@@ -896,16 +857,10 @@ function placeHoldersCount (b64) {
     throw new Error('Invalid string. Length must be a multiple of 4')
   }
 
-  // the number of equal signs (place holders)
-  // if there are two placeholders, than the two characters before it
-  // represent one byte
-  // if there is only one, then the three characters before it represent 2 bytes
-  // this is just a cheap hack to not do indexOf twice
   return b64[len - 2] === '=' ? 2 : b64[len - 1] === '=' ? 1 : 0
 }
 
 function byteLength (b64) {
-  // base64 is 4/3 + up to two characters of the original data
   return b64.length * 3 / 4 - placeHoldersCount(b64)
 }
 
@@ -916,7 +871,6 @@ function toByteArray (b64) {
 
   arr = new Arr(len * 3 / 4 - placeHolders)
 
-  // if there are placeholders, only get up to the last complete 4 chars
   l = placeHolders > 0 ? len - 4 : len
 
   var L = 0
@@ -957,17 +911,15 @@ function encodeChunk (uint8, start, end) {
 function fromByteArray (uint8) {
   var tmp
   var len = uint8.length
-  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
+  var extraBytes = len % 3
   var output = ''
   var parts = []
-  var maxChunkLength = 16383 // must be multiple of 3
+  var maxChunkLength = 16383 
 
-  // go through the array every three bytes, we'll deal with trailing stuff later
   for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
     parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
   }
 
-  // pad the end with zeros, but make sure to not forget the extra bytes
   if (extraBytes === 1) {
     tmp = uint8[len - 1]
     output += lookup[tmp >> 2]
@@ -990,13 +942,11 @@ function fromByteArray (uint8) {
 (function (module, exports) {
   'use strict';
 
-  // Utils
   function assert (val, msg) {
-    if (!val) throw new Error(msg || 'Assertion failed');
+    if (!val) throw new Error(msg || 'Assertion failed'); // utils.assert(false, 'message');
   }
 
-  // Could use `inherits` module, but don't want to move from single file
-  // architecture yet.
+  // Could use `inherits` module, but don't want to move from single file architecture yet.
   function inherits (ctor, superCtor) {
     ctor.super_ = superCtor;
     var TempCtor = function () {};
@@ -1005,18 +955,15 @@ function fromByteArray (uint8) {
     ctor.prototype.constructor = ctor;
   }
 
-  // BN
 
   function BN (number, base, endian) {
-    if (BN.isBN(number)) {
+    if (BN.isBN(number)) { //BN checker
       return number;
     }
 
     this.negative = 0;
     this.words = null;
     this.length = 0;
-
-    // Reduction context
     this.red = null;
 
     if (number !== null) {
@@ -8828,22 +8775,22 @@ module.exports = TruffleSchema;
 },{"./core":17,"./x64-core":19}],19:[function(require,module,exports){
 ;(function (root, factory) {
 	if (typeof exports === "object") {
-		// CommonJS
-		module.exports = exports = factory(require("./core"));
+	
+		module.exports = exports = factory(require("./core")); 	// CommonJS
 	}
 	else if (typeof define === "function" && define.amd) {
-		// AMD
-		define(["./core"], factory);
+
+		define(["./core"], factory); 		// AMD
 	}
 	else {
-		// Global (browser)
-		factory(root.CryptoJS);
+		
+		factory(root.CryptoJS); 		// Global (browser)
 	}
 }(this, function (CryptoJS) {
 
 	(function (undefined) {
-	    // Shortcuts
-	    var C = CryptoJS;
+	    
+	    var C = CryptoJS; // Shortcuts
 	    var C_lib = C.lib;
 	    var Base = C_lib.Base;
 	    var X32WordArray = C_lib.WordArray;
@@ -8881,13 +8828,6 @@ module.exports = TruffleSchema;
 	         *
 	         *     var negated = x64Word.not();
 	         */
-	        // not: function () {
-	            // var high = ~this.high;
-	            // var low = ~this.low;
-
-	            // return X64Word.create(high, low);
-	        // },
-
 	        /**
 	         * Bitwise ANDs this word with the passed word.
 	         *
@@ -8899,12 +8839,6 @@ module.exports = TruffleSchema;
 	         *
 	         *     var anded = x64Word.and(anotherX64Word);
 	         */
-	        // and: function (word) {
-	            // var high = this.high & word.high;
-	            // var low = this.low & word.low;
-
-	            // return X64Word.create(high, low);
-	        // },
 
 	        /**
 	         * Bitwise ORs this word with the passed word.
@@ -8917,12 +8851,6 @@ module.exports = TruffleSchema;
 	         *
 	         *     var ored = x64Word.or(anotherX64Word);
 	         */
-	        // or: function (word) {
-	            // var high = this.high | word.high;
-	            // var low = this.low | word.low;
-
-	            // return X64Word.create(high, low);
-	        // },
 
 	        /**
 	         * Bitwise XORs this word with the passed word.
@@ -8935,12 +8863,6 @@ module.exports = TruffleSchema;
 	         *
 	         *     var xored = x64Word.xor(anotherX64Word);
 	         */
-	        // xor: function (word) {
-	            // var high = this.high ^ word.high;
-	            // var low = this.low ^ word.low;
-
-	            // return X64Word.create(high, low);
-	        // },
 
 	        /**
 	         * Shifts this word n bits to the left.
@@ -8953,17 +8875,6 @@ module.exports = TruffleSchema;
 	         *
 	         *     var shifted = x64Word.shiftL(25);
 	         */
-	        // shiftL: function (n) {
-	            // if (n < 32) {
-	                // var high = (this.high << n) | (this.low >>> (32 - n));
-	                // var low = this.low << n;
-	            // } else {
-	                // var high = this.low << (n - 32);
-	                // var low = 0;
-	            // }
-
-	            // return X64Word.create(high, low);
-	        // },
 
 	        /**
 	         * Shifts this word n bits to the right.
@@ -8976,17 +8887,6 @@ module.exports = TruffleSchema;
 	         *
 	         *     var shifted = x64Word.shiftR(7);
 	         */
-	        // shiftR: function (n) {
-	            // if (n < 32) {
-	                // var low = (this.low >>> n) | (this.high << (32 - n));
-	                // var high = this.high >>> n;
-	            // } else {
-	                // var low = this.high >>> (n - 32);
-	                // var high = 0;
-	            // }
-
-	            // return X64Word.create(high, low);
-	        // },
 
 	        /**
 	         * Rotates this word n bits to the left.
@@ -8999,10 +8899,6 @@ module.exports = TruffleSchema;
 	         *
 	         *     var rotated = x64Word.rotL(25);
 	         */
-	        // rotL: function (n) {
-	            // return this.shiftL(n).or(this.shiftR(64 - n));
-	        // },
-
 	        /**
 	         * Rotates this word n bits to the right.
 	         *
@@ -9014,9 +8910,6 @@ module.exports = TruffleSchema;
 	         *
 	         *     var rotated = x64Word.rotR(7);
 	         */
-	        // rotR: function (n) {
-	            // return this.shiftR(n).or(this.shiftL(64 - n));
-	        // },
 
 	        /**
 	         * Adds this word with the passed word.
@@ -9029,13 +8922,6 @@ module.exports = TruffleSchema;
 	         *
 	         *     var added = x64Word.add(anotherX64Word);
 	         */
-	        // add: function (word) {
-	            // var low = (this.low + word.low) | 0;
-	            // var carry = (low >>> 0) < (this.low >>> 0) ? 1 : 0;
-	            // var high = (this.high + word.high + carry) | 0;
-
-	            // return X64Word.create(high, low);
-	        // }
 	    });
 
 	    /**

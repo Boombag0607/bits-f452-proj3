@@ -1,7 +1,7 @@
 App = {
   web3Provider: null,
   contracts: {},
-  account: '0x0',
+  account: "0x0",
   hasVoted: false,
 
   init: function () {
@@ -9,14 +9,13 @@ App = {
   },
 
   initWeb3: function () {
-    // TODO: refactor conditional
-    if (typeof web3 !== 'undefined') {
-      // If a web3 instance is already provided by Meta Mask.
+    if (typeof web3 !== "undefined") {
       App.web3Provider = web3.currentProvider;
       web3 = new Web3(web3.currentProvider);
     } else {
-      // Specify default instance if no web3 instance provided
-      App.web3Provider = new Web3.providers.HttpProvider('http://localhost:8545');
+      App.web3Provider = new Web3.providers.HttpProvider(
+        "http://localhost:7545"
+      );
       web3 = new Web3(App.web3Provider);
     }
     return App.initContract();
@@ -24,9 +23,8 @@ App = {
 
   initContract: function () {
     $.getJSON("Verification.json", function (verification) {
-      // Instantiate a new truffle contract from the artifact
       App.contracts.Verification = TruffleContract(verification);
-      // Connect provider to interact with contract
+
       App.contracts.Verification.setProvider(App.web3Provider);
 
       App.listenForEvents();
@@ -35,106 +33,94 @@ App = {
     });
   },
 
-  // Listen for events emitted from the contract
-  listenForEvents: function () {
-    
-  },
+  listenForEvents: function () {},
 
   render: function () {
-
-    // Load account data and show on UI
     web3.eth.getCoinbase(function (err, account) {
       if (err === null) {
         App.account = account;
       }
-     });
-
+    });
   },
 
   signCustomer: function () {
-
-    var name = $('#name').val();
-    var dob = $('#dob').val();
-    var bankAccount = $('#account').val();
+    var name = $("#name").val();
+    var dob = $("#dob").val();
+    var bankAccount = $("#account").val();
     var message = name + dob + bankAccount;
 
     message = web3.sha3(message);
-    
-    // Account data - show on UI
+
     $("#accountAddress").html("Your Ethereum Account: " + App.account);
 
-    // show message on UI
-    $('#messageHolder').html("Your unique message is: " + message);
+    $("#messageHolder").html("Your unique message is: " + message);
 
-    // sign the message with eth account
-    web3.eth.sign( App.account, message, function (error, signature) {
-      // save signature on eth
+    web3.eth.sign(App.account, message, function (error, signature) {
       App.contracts.Verification.deployed()
         .then(function (instance) {
           verificationInstance = instance;
-          verificationInstance.addCustomerSignature(bankAccount,signature);
-        }).catch(function (error) {
+          verificationInstance.addCustomerSignature(bankAccount, signature);
+          // return signature;
+        })
+        .catch(function (error) {
           console.warn(error);
         });
-
     });
-
   },
 
   verifyCustomer: function () {
-
-    var name = $('#name').val();
-    var dob = $('#dob').val();
-    var bankAccount = $('#account').val();
-    var account = $('#ethAccount').val();
+    var name = $("#name").val();
+    var dob = $("#dob").val();
+    var bankAccount = $("#account").val();
+    var account = $("#ethAccount").val();
     var message = name + dob + bankAccount;
+    console.log("here1");
 
     message = web3.sha3(message);
 
-    // retrieve signatures
     App.contracts.Verification.deployed()
-        .then(function (instance) {
-          App.verificationInstance = instance;
-          return instance.getCustomerSignature(bankAccount);
+      .then(function (instance) {
+        App.verificationInstance = instance;
+        console.log("here2");
+        return instance.getCustomerSignature(bankAccount);
+      })
+      .then(function (signature) {
+        console.log("here5");
+        if (signature == "") {
+          alert("No signature found on ethereum");
+        } else {
+          c;
 
-        }).then(function (signature) {
+          $("#signatureHolder").html(
+            "Customer's signature is: <br> " + signature
+          );
 
-          if(signature == ''){
-
-            alert("No signature found on ethereum");
-
-          }else{
-
-            // show signature on UI
-            $('#signatureHolder').html("Customer's signature is: <br> "+signature);
-
-            // validate if account is a valid address
-            if(!web3.isAddress(account)){
-              alert("Invalid ethereum address");
-              return;
-            }
-
-            // do signature verification 
-            App.verificationInstance.verifyCustomerSignature(message,account,signature)
-              .then(function (verificationStatus){
-
-                if(verificationStatus == true){
-                  alert("verification success");
-                }else{
-                  alert("verification failed")
-                }
-
-              }).catch(function (error) {
-                console.warn(error);
-              });
-
+          if (!web3.isAddress(account)) {
+            alert("Invalid ethereum address");
+            return;
           }
-        }).catch(function (error) {
-          console.warn(error);
-        });
 
-  }
-
+          App.verificationInstance
+            .verifyCustomerSignature(message, account, signature)
+            .then(function (verificationStatus) {
+              console.log("here2");
+              if (verificationStatus == true) {
+                alert("verification success");
+              } else {
+                alert("verification failed");
+              }
+            })
+            .catch(function (error) {
+              console.log("here3");
+              console.warn(error);
+            });
+        }
+      })
+      .catch(function (error) {
+        console.log("here4");
+        console.log(error);
+      });
+  },
 };
 
 $(function () {

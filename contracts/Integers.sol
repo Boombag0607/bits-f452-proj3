@@ -1,23 +1,7 @@
 pragma solidity ^0.4.0;
 
-/**
- * Integers Library
- * 
- * In summary this is a simple library of integer functions which allow a simple
- * conversion to and from strings
- * 
- * @author James Lockhart <james@n3tw0rk.co.uk>
- */
 library Integers {
-    /**
-     * Parse Int
-     * 
-     * Converts an ASCII string value into an uint as long as the string 
-     * its self is a valid unsigned integer
-     * 
-     * @param _value The ASCII string to be converted to an unsigned integer
-     * @return uint The unsigned value of the ASCII string
-     */
+    
     function parseInt(string _value) 
         public
         returns (uint _ret) {
@@ -30,14 +14,7 @@ library Integers {
         }
     }
     
-    /**
-     * To String
-     * 
-     * Converts an unsigned integer to the ASCII string equivalent value
-     * 
-     * @param _base The unsigned integer to be converted to a string
-     * @return string The resulting ASCII string value
-     */
+    
     function toString(uint _base) 
         internal
         returns (string) {
@@ -54,14 +31,6 @@ library Integers {
         return string(_real);
     }
 
-    /**
-     * To Byte
-     *
-     * Convert an 8 bit unsigned integer to a byte
-     *
-     * @param _base The 8 bit unsigned integer
-     * @return byte The byte equivalent
-     */
     function toByte(uint8 _base) 
         public
         returns (byte _ret) {
@@ -72,14 +41,6 @@ library Integers {
         }
     }
 
-    /**
-     * To Bytes
-     *
-     * Converts an unsigned integer to bytes
-     *
-     * @param _base The integer to be converted to bytes
-     * @return bytes The bytes equivalent 
-     */
     function toBytes(uint _base) 
         internal
         returns (bytes _ret) {

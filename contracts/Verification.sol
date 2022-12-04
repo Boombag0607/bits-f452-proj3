@@ -7,27 +7,21 @@ contract Verification {
     using Strings for *;
     using Integers for uint;
 
-    // Store bank accounts with signature
     mapping(uint256 => string) public signatures;
 
-    // constructor
     function Verification () public {
         
     }
 
-    // method to insert new customer signature
     function addCustomerSignature (uint256 _bankAccount, string _signature) public {        
         signatures[_bankAccount] = _signature;
     }
 
-    // method to retrieve customer signature
     function getCustomerSignature (uint256 _bankAccount) public view returns (string) {        
         return signatures[_bankAccount];
     }
 
-    // method to verify customer signature
     function verifyCustomerSignature (string _message, address _account, string _signature) public  returns (bool) {
-        // ecrecover of signature should be equal to account
         _signature = _signature._substring(130,2); //remove 0x
         string memory rs = "0x".concat(_signature._substring(64, 0));
         string memory ss = "0x".concat(_signature._substring(64, 64));
